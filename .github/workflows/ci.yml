@@ -45,6 +45,7 @@ jobs:
           pip install git+https://github.com/alliedmodders/ambuild
 
       - name: Checking out hl2sdks
+        shell: bash
         run: |
             sdks=(hl2dm dods css tf2)
             for sdk in "${sdks[@]}"
@@ -67,7 +68,7 @@ jobs:
       - name: Compiling
         working-directory: stripper-source
         run: |
-          python3 configure.py --enable-optimize --symbol-files --sdks=css --targets=x86,x86_64
+          python3 configure.py --enable-optimize --symbol-files --sdks=hl2dm,dods,css,tf2 --targets=x86,x86_64
           ambuild objdir
 
       - name: Uploading package
