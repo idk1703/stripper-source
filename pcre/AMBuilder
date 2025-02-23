@@ -1,0 +1,43 @@
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
+import os, platform
+
+builder.SetBuildFolder('libpcre')
+
+rvalue = {}
+for cxx in builder.targets:
+  binary = MMS.StaticLibrary(builder, cxx, 'pcre')
+  binary.compiler.includes += [
+    os.path.join(builder.sourcePath, 'pcre'),
+  ]
+
+  binary.compiler.defines += [
+    'HAVE_CONFIG_H',
+  ]
+
+  if binary.compiler.target.platform == 'linux':
+    binary.compiler.cflags += ['-Wno-int-in-bool-context']
+
+  binary.sources += [
+    'pcre_chartables.c',
+    'pcre_compile.c',
+    'pcre_config.c',
+    'pcre_dfa_exec.c',
+    'pcre_exec.c',
+    'pcre_fullinfo.c',
+    'pcre_get.c',
+    'pcre_globals.c',
+    'pcre_info.c',
+    'pcre_newline.c',
+    'pcre_maketables.c',
+    'pcre_ord2utf8.c',
+    'pcre_refcount.c',
+    'pcre_study.c',
+    'pcre_tables.c',
+    'pcre_try_flipped.c',
+    'pcre_ucd.c',
+    'pcre_valid_utf8.c',
+    'pcre_version.c',
+    'pcre_xclass.c',
+  ]
+
+  rvalue[binary.compiler.target.arch] = builder.Add(binary)

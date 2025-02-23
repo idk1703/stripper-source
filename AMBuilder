@@ -3,8 +3,9 @@ import os.path
 
 name = 'stripper.core'
 
-for cxx in MMS.all_targets:
+libpcre = builder.Build('pcre/AMBuilder')
 
+for cxx in MMS.all_targets:
   binary = MMS.Library(cxx, name)
 
   binary.sources = [
@@ -13,13 +14,7 @@ for cxx in MMS.all_targets:
   ]
   binary.compiler.cxxincludes += [os.path.join(MMS.mms_root, 'core', 'sourcehook')]
 
-  if binary.compiler.target.arch == 'x86':
-    if cxx.target.platform == 'linux':
-      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-linux.a')]
-    elif cxx.target.platform == 'windows':
-      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-windows.lib')]
-    elif cxx.target.platform == 'mac':
-      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-darwin.a')]
+  binary.compiler.postlink += [libpcre[binary.compiler.target.arch].binary]
 
   nodes = builder.Add(binary)
   MMS.binaries += [nodes]
