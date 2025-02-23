@@ -27,9 +27,10 @@ StripperPlugin g_Plugin;
 
 PLUGIN_EXPOSE(StripperPlugin, g_Plugin);
 
-static IVEngineServer *engine = NULL;
-static IServerGameDLL *server = NULL;
-static IServerGameClients *clients = NULL;
+IVEngineServer *engine = NULL;
+IServerGameDLL *server = NULL;
+IServerGameClients *clients = NULL;
+ICvar *icvar = NULL;
 static SourceHook::String g_mapname;
 static stripper_core_t stripper_core;
 static char game_path[256];
@@ -40,38 +41,40 @@ SH_DECL_HOOK0(IVEngineServer, GetMapEntitiesString, SH_NOATTRIB, 0, const char *
 SH_DECL_HOOK6(IServerGameDLL, LevelInit, SH_NOATTRIB, 0, bool, char const *, char const *, char const *, char const *, bool, bool);
 SH_DECL_HOOK1_void(IServerGameClients, SetCommandClient, SH_NOATTRIB, 0, int);
 
-#if !defined ORANGEBOX_BUILD
-ICvar *g_pCVar = NULL;
-#endif
-
-ICvar *
-GetICVar()
-{
-#if defined METAMOD_PLAPI_VERSION
-#if SOURCE_ENGINE == SE_ORANGEBOX || SOURCE_ENGINE == SE_LEFT4DEAD || SOURCE_ENGINE == SE_LEFT4DEAD2 || SOURCE_ENGINE == SE_TF2 || SOURCE_ENGINE == SE_DODS || SOURCE_ENGINE == SE_HL2DM || SOURCE_ENGINE == SE_NUCLEARDAWN || \
-	SOURCE_ENGINE == SE_ALIENSWARM || SOURCE_ENGINE == SE_BLOODYGOODTIME || SOURCE_ENGINE == SE_CSGO || SOURCE_ENGINE == SE_CSS || SOURCE_ENGINE == SE_INSURGENCY || SOURCE_ENGINE == SE_SDK2013 || SOURCE_ENGINE == SE_BMS
-	return (ICvar *)((g_SMAPI->GetEngineFactory())(CVAR_INTERFACE_VERSION, NULL));
-#else
-	return (ICvar *)((g_SMAPI->GetEngineFactory())(VENGINE_CVAR_INTERFACE_VERSION, NULL));
-#endif
-#else
-	return (ICvar *)((g_SMAPI->engineFactory())(VENGINE_CVAR_INTERFACE_VERSION, NULL));
-#endif
-}
-
 #if defined WIN32
 #define dlopen(x, y) LoadLibrary(x)
 #define dlclose(x) FreeLibrary(x)
 #define dlsym(x, y) GetProcAddress(x, y)
 typedef HMODULE LibraryHandle;
+#define PATH_SEP_STR "\\"
 #else
 typedef void *LibraryHandle;
+#define PATH_SEP_STR "/"
+#endif
+
+#if defined(_WIN64) || defined(__x86_64__)
+#define PLATFORM_ARCH_FOLDER "x64" PATH_SEP_STR
+#else
+#define PLATFORM_ARCH_FOLDER ""
 #endif
 
 static LibraryHandle stripper_lib;
 
 static void
 SetCommandClient(int client);
+
+/**
+ * Something like this is needed to register cvars/CON_COMMANDs.
+ */
+class BaseAccessor : public IConCommandBaseAccessor
+{
+public:
+	bool RegisterConCommandBase(ConCommandBase *pCommandBase)
+	{
+		/* Always call META_REGCVAR instead of going through the engine. */
+		return META_REGCVAR(pCommandBase);
+	}
+} s_BaseAccessor;
 
 static void
 log_message(const char *fmt, ...)
@@ -140,9 +143,8 @@ bool StripperPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 {
 	PLUGIN_SAVEVARS();
 
-#if defined METAMOD_PLAPI_VERSION
 	GET_V_IFACE_ANY(GetServerFactory, server, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
-#if SOURCE_ENGINE == SE_TF2 || SOURCE_ENGINE == SE_CSS || SOURCE_ENGINE == SE_DODS || SOURCE_ENGINE == SE_HL2DM || SOURCE_ENGINE == SE_SDK2013 || SOURCE_ENGINE == SE_BMS
+#if SOURCE_ENGINE == SE_SDK2013
 	// Shim to avoid hooking shims
 	engine = (IVEngineServer *)ismm->GetEngineFactory()("VEngineServer023", nullptr);
 	if (!engine)
@@ -164,12 +166,8 @@ bool StripperPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 #else
 	GET_V_IFACE_CURRENT(GetEngineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
 #endif
-	GET_V_IFACE_ANY(GetServerFactory, clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
-#else
-	GET_V_IFACE_ANY(serverFactory, server, IServerGameDLL, INTERFACEVERSION_SERVERGAMEDLL);
-	GET_V_IFACE_CURRENT(engineFactory, engine, IVEngineServer, INTERFACEVERSION_VENGINESERVER);
-	GET_V_IFACE_ANY(serverFactory, clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
-#endif
+	GET_V_IFACE_CURRENT(GetServerFactory, clients, IServerGameClients, INTERFACEVERSION_SERVERGAMECLIENTS);
+	GET_V_IFACE_CURRENT(GetEngineFactory, icvar, ICvar, CVAR_INTERFACE_VERSION);
 
 	engine->GetGameDir(game_path, sizeof(game_path));
 	stripper_game.game_path = game_path;
@@ -180,8 +178,7 @@ bool StripperPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 	cvar_stripper_cfg_path.InstallChangeCallback(stripper_cfg_path_changed);
 
 #if SOURCE_ENGINE == SE_DARKMESSIAH
-	ICvar *cvar = GetICVar();
-	const char *temp = (cvar == NULL) ? NULL : cvar->GetCommandLineValue("+stripper_path");
+	const char *temp = (icvar == NULL) ? NULL : icvar->GetCommandLineValue("+stripper_path");
 #else
 	const char *temp = CommandLine()->ParmValue("+stripper_path");
 #endif
@@ -202,7 +199,7 @@ bool StripperPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 	char path[256];
 	g_SMAPI->PathFormat(path,
 						sizeof(path),
-						"%s/%s/bin/stripper.core" PLATFORM_EXT,
+						"%s/%s/bin/" PLATFORM_ARCH_FOLDER "stripper.core" PLATFORM_EXT,
 						game_path,
 						stripper_game.stripper_path);
 
@@ -247,12 +244,11 @@ bool StripperPlugin::Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen
 	SH_ADD_HOOK_STATICFUNC(IServerGameDLL, LevelInit, server, LevelInit_handler, false);
 	SH_ADD_HOOK_STATICFUNC(IServerGameClients, SetCommandClient, clients, SetCommandClient, false);
 
-#if SOURCE_ENGINE == SE_ORANGEBOX || SOURCE_ENGINE == SE_LEFT4DEAD || SOURCE_ENGINE == SE_LEFT4DEAD2 || SOURCE_ENGINE == SE_TF2 || SOURCE_ENGINE == SE_DODS || SOURCE_ENGINE == SE_HL2DM || SOURCE_ENGINE == SE_NUCLEARDAWN || \
-	SOURCE_ENGINE == SE_ALIENSWARM || SOURCE_ENGINE == SE_BLOODYGOODTIME || SOURCE_ENGINE == SE_CSGO || SOURCE_ENGINE == SE_CSS || SOURCE_ENGINE == SE_INSURGENCY || SOURCE_ENGINE == SE_SDK2013 || SOURCE_ENGINE == SE_BMS
-	g_pCVar = GetICVar();
-	ConVar_Register(0, this);
+#if SOURCE_ENGINE >= SE_ORANGEBOX
+	g_pCVar = icvar;
+	ConVar_Register(0, &s_BaseAccessor);
 #else
-	ConCommandBaseMgr::OneTimeInit(this);
+	ConCommandBaseMgr::OneTimeInit(&s_BaseAccessor);
 #endif
 
 	return true;
@@ -377,11 +373,6 @@ const char *
 StripperPlugin::GetLogTag()
 {
 	return "STRIPPER";
-}
-
-bool StripperPlugin::RegisterConCommandBase(ConCommandBase *pVar)
-{
-	return META_REGCVAR(pVar);
 }
 
 static int last_command_client = 1;
