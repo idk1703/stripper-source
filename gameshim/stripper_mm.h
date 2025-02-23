@@ -16,9 +16,8 @@
 #include <sh_list.h>
 #include <sh_stack.h>
 
-class StripperPlugin :
-    public ISmmPlugin,
-    public IConCommandBaseAccessor
+class StripperPlugin : public ISmmPlugin,
+                       public IConCommandBaseAccessor
 {
 public:
     bool Load(PluginId id, ISmmAPI *ismm, char *error, size_t maxlen, bool late);
@@ -26,6 +25,7 @@ public:
     bool Pause(char *error, size_t maxlen);
     bool Unpause(char *error, size_t maxlen);
     void AllPluginsLoaded();
+
 public:
     const char *GetAuthor();
     const char *GetName();
@@ -35,27 +35,30 @@ public:
     const char *GetVersion();
     const char *GetDate();
     const char *GetLogTag();
-public:    //IConCommandBaseAccessor
+
+public: // IConCommandBaseAccessor
     bool RegisterConCommandBase(ConCommandBase *pVar);
 };
 
 PLUGIN_GLOBALVARS();
 
-#define    FIND_IFACE(func, assn_var, num_var, name, type) \
-    do { \
-        if ( (assn_var=(type)((ismm->func())(name, NULL))) != NULL ) { \
-            num_var = 0; \
-            break; \
-        } \
-        if (num_var >= 999) \
-            break; \
-    } while ( num_var=ismm->FormatIface(name, sizeof(name)-1) ); \
-    if (!assn_var) { \
-        if (error) \
+#define FIND_IFACE(func, assn_var, num_var, name, type)                   \
+    do                                                                    \
+    {                                                                     \
+        if ((assn_var = (type)((ismm->func())(name, NULL))) != NULL)      \
+        {                                                                 \
+            num_var = 0;                                                  \
+            break;                                                        \
+        }                                                                 \
+        if (num_var >= 999)                                               \
+            break;                                                        \
+    } while (num_var = ismm->FormatIface(name, sizeof(name) - 1));        \
+    if (!assn_var)                                                        \
+    {                                                                     \
+        if (error)                                                        \
             snprintf(error, maxlen, "Could not find interface %s", name); \
-        return false; \
+        return false;                                                     \
     }
-
 
 const char *GetMapEntitiesString_handler();
 bool LevelInit_handler(char const *pMapName, char const *pMapEntities, char const *c, char const *d, bool e, bool f);
