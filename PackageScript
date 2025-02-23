@@ -1,4 +1,4 @@
-# vim: set ts=2 sw=2 tw=99 noet ft=python: 
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
 import os
 
 builder.SetBuildFolder('package')
@@ -11,13 +11,13 @@ dumps_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'dumps'))
 maps_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'maps'))
 
 for cxx in MMS.all_targets:
-	if cxx.target.arch == 'x86_64':
-		if cxx.target.platform == 'windows':
-			bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'win64'))
-		elif cxx.target.platform == 'linux':
-			bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'linux64'))
-		elif cxx.target.platform == 'mac':
-			bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'osx64'))
+  if cxx.target.arch == 'x86_64':
+    if cxx.target.platform == 'windows':
+      bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'win64'))
+    elif cxx.target.platform == 'linux':
+      bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'linux64'))
+    elif cxx.target.platform == 'mac':
+      bin64_folder = builder.AddFolder(os.path.join('addons', 'stripper', 'bin', 'osx64'))
 
 builder.AddCopy(os.path.join(builder.sourcePath, 'stripper.vdf'), metamod_folder)
 builder.AddCopy(os.path.join(builder.sourcePath, 'global_filters.cfg'), stripper_folder)
@@ -25,15 +25,15 @@ builder.AddCopy(os.path.join(builder.sourcePath, 'de_dust.cfg'), maps_folder)
 
 pdb_list = []
 for task in MMS.binaries:
-	if task.target.arch == 'x86_64':
-		builder.AddCopy(task.binary, bin64_folder)
-	else:
-		builder.AddCopy(task.binary, bin_folder)
+  if task.target.arch == 'x86_64':
+    builder.AddCopy(task.binary, bin64_folder)
+  else:
+    builder.AddCopy(task.binary, bin_folder)
 
-	if task.debug:
-		pdb_list.append(task.debug)
+  if task.debug:
+    pdb_list.append(task.debug)
 
 # Generate PDB info.
 with open(os.path.join(builder.buildPath, 'pdblog.txt'), 'wt') as fp:
-	for line in pdb_list:
-		fp.write(line.path + '\n')
+  for line in pdb_list:
+    fp.write(line.path + '\n')

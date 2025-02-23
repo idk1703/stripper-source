@@ -1,20 +1,20 @@
-# vim: set ts=2 sw=2 tw=99 noet ft=python: 
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
 import os.path
 
 for cxx in MMS.all_targets:
 
-	if cxx.target.platform != 'linux':
-		name = 'stripper_mm'
-	else:
-		name = 'stripper_mm_i486'
-	
-	binary = MMS.Library(cxx, name)
+  if cxx.target.platform != 'linux':
+    name = 'stripper_mm'
+  else:
+    name = 'stripper_mm_i486'
 
-	binary.sources = [
-		'stripper_loader.cpp',
-	]
+  binary = MMS.Library(cxx, name)
 
-	binary.compiler.cxxincludes += [os.path.join(MMS.mms_root, 'core')]
+  binary.sources = [
+    'stripper_loader.cpp',
+  ]
 
-	nodes = builder.Add(binary)
-	MMS.binaries += [nodes]
+  binary.compiler.cxxincludes += [os.path.join(MMS.mms_root, 'core')]
+
+  nodes = builder.Add(binary)
+  MMS.binaries += [nodes]

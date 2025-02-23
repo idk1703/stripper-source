@@ -111,7 +111,7 @@ METAMOD_PLUGIN *TryAndLoadLibrary(const char *path)
 
 EXPORT METAMOD_PLUGIN *CreateInterface_MMS(const MetamodVersionInfo *mvi, const MetamodLoaderInfo *mli)
 {
-	/* We can only handle API v2 right now.  In case the plugin API gets bumped,  
+	/* We can only handle API v2 right now.  In case the plugin API gets bumped,
 	 * we ignore other cases.
 	 */
 	if (mvi->api_major != 2)

@@ -1,25 +1,25 @@
-# vim: set ts=2 sw=2 tw=99 noet ft=python: 
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
 import os.path
 
 name = 'stripper.core'
 
 for cxx in MMS.all_targets:
 
-	binary = MMS.Library(cxx, name)
+  binary = MMS.Library(cxx, name)
 
-	binary.sources = [
-		'parser.cpp',
-		'support.cpp'
-	]
-	binary.compiler.cxxincludes += [os.path.join(MMS.mms_root, 'core', 'sourcehook')]
+  binary.sources = [
+    'parser.cpp',
+    'support.cpp'
+  ]
+  binary.compiler.cxxincludes += [os.path.join(MMS.mms_root, 'core', 'sourcehook')]
 
-	if binary.compiler.target.arch == 'x86':
-		if cxx.target.platform == 'linux':
-			binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-linux.a')]
-		elif cxx.target.platform == 'windows':
-			binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-windows.lib')]
-		elif cxx.target.platform == 'mac':
-			binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-darwin.a')]
+  if binary.compiler.target.arch == 'x86':
+    if cxx.target.platform == 'linux':
+      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-linux.a')]
+    elif cxx.target.platform == 'windows':
+      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-windows.lib')]
+    elif cxx.target.platform == 'mac':
+      binary.compiler.postlink += [os.path.join(builder.sourcePath, 'pcre', 'libpcre-darwin.a')]
 
-	nodes = builder.Add(binary)
-	MMS.binaries += [nodes]
+  nodes = builder.Add(binary)
+  MMS.binaries += [nodes]
