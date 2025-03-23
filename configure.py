@@ -1,4 +1,4 @@
-# vim: set sts=2 ts=8 sw=2 tw=99 et:
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
 import sys
 try:
   from ambuild2 import run, util

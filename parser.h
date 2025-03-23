@@ -1,5 +1,5 @@
 /** vim: set ts=4 sw=4 et tw=99:
- * 
+ *
  * === Stripper for Metamod:Source ===
  * Copyright (C) 2005-2009 David "BAILOPAN" Anderson
  * No warranties of any kind.
@@ -14,7 +14,7 @@
 #include <sh_string.h>
 #include <sh_list.h>
 #include <sh_stack.h>
-#include "pcre.h"
+#include "pcre/pcre.h"
 
 struct CACHEABLE
 {

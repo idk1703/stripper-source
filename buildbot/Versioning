@@ -1,4 +1,4 @@
-# vim: set ts=8 sts=2 sw=2 tw=99 et ft=python: 
+# vim: set sts=2 ts=2 sw=2 tw=99 et ft=python:
 import os, sys
 import re
 

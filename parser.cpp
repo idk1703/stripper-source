@@ -1,5 +1,5 @@
 /** vim: set ts=4 sw=4 et tw=99:
- * 
+ *
  * === Stripper for Metamod:Source ===
  * Copyright (C) 2005-2009 David "BAILOPAN" Anderson
  * No warranties of any kind.
@@ -9,7 +9,7 @@
  * ===================================
  */
 
-#include "pcre.h"
+#include "pcre/pcre.h"
 #include <sh_stack.h>
 #include <ctype.h>
 #include "parser.h"
@@ -102,7 +102,7 @@ Stripper::~Stripper()
         delete m_PropCache.front();
         m_PropCache.pop();
     }
-    
+
     free(m_tostring);
 }
 
@@ -151,7 +151,7 @@ void Stripper::FreeProp(ent_prop *prop)
 void Stripper::SetEntityList(const char *ents)
 {
     Clear();
-    
+
     m_resync = false;
     AppendToString(ents, strlen(ents));
 
@@ -205,7 +205,7 @@ void Stripper::SetEntityList(const char *ents)
     }
     /* delete temporary string */
     delete [] _tmp;
-    
+
     /* build the real props list */
     _BuildPropList();
 }
@@ -596,7 +596,7 @@ void Stripper::ApplyFileFilter(const char *file)
         } else if (!strncmp(buffer, "insert:", 7) && (mode == Mode_Replace)) {
             submode = SubMode_Insert;
         } else if (strcmp(buffer, "{")==0 && !in_block) {
-            /* if we reach a new block and we're not in a block, 
+            /* if we reach a new block and we're not in a block,
              * dump the current props table and reset.
              */
             if (mode != Mode_Replace || (mode == Mode_Replace && submode != SubMode_None))
@@ -605,11 +605,11 @@ void Stripper::ApplyFileFilter(const char *file)
                 props.clear();
             }
         } else if (strncmp(buffer, "}", 1) == 0 && in_block) {
-            /* if we reach the end of a block and we're in a block, 
+            /* if we reach the end of a block and we're in a block,
              * mark the end and flush what we've done
              */
             in_block = false;
-            
+
             if (mode == Mode_Replace)
             {
                 assert(submode != SubMode_None);
@@ -652,8 +652,8 @@ void Stripper::ApplyFileFilter(const char *file)
                 } else if (mode == Mode_Add) {
                     RunAddFilter(props);
                 }
-    
-                /* push each of the unused filters 
+
+                /* push each of the unused filters
                 * and then clear the property list
                 */
                 end = props.end();
